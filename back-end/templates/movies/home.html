@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        input[type="text"], select {
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        img {
+            max-width: 100px;
+            height: auto;
+        }
+
+        ul {
+            padding-left: 20px;
+            list-style-type: disc;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <input type="text" id="searchInput" placeholder="Search for movies...">
+
+    <select name="genre" id="genreSelect">
+        <option value="">All Genres</option>
+        {% for name in all_genres %}
+        <option value="{{ name }}"> {{ name }} </option>
+        {% endfor %}
+    </select>
+
+    <select name="date" id="dateSelect" style="display: none;">
+        <option value="">All Dates</option>
+        {% for date in all_dates %}
+        <option value="{{ date }}">{{ date }}</option>
+        {% endfor %}
+    </select>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Poster</th>
+                <th>Movie Genres</th>
+                <th>IMDB Rating</th>
+                <th>Meta Score</th>
+                <th>Released Year</th>
+                <th>Movie Run Time</th>
+                <th>Vote</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in movies %}
+                <tr data-genres="{% for genre in movie.movie.genres.all %}{{ genre.name }}{% if not forloop.last %},{% endif %}{% endfor %}" data-title="{{ movie.movie.title | escapejs }}" data-date="{{ movie.date }}">
+                    <td>{{ movie.date|date:"Y-m-d" }}</td>
+                    <td>{{ movie.movie.title }}</td>
+                    <td><img src="{{ movie.movie.poster }}" alt="Poster of {{ movie.movie.title }}"></td>
+                    <td>
+                        <ul>
+                            {% for genre in movie.movie.genres.all %}
+                            <li>{{ genre.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>{{ movie.movie.imdb_rating }}</td>
+                    <td>{{ movie.meta_score }}</td>
+                    <td>{{ movie.movie.year }}</td>
+                    <td>{{ movie.movie.runtime }}</td>
+                    <td><button class="edit-button" data-id="{{ movie.movie.id }}" data-date="{{ movie.date }}">Vote For Movie</button></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        $(document).ready(function() {
+            function filterRows() {
+                var selectedGenre = $('#genreSelect').val().toLowerCase();
+                var searchQuery = $('#searchInput').val().toLowerCase();
+                var selectedDate = $('#dateSelect').val();
+
+                $('tr[data-genres]').each(function() {
+                    var genres = $(this).data('genres').toLowerCase().split(',');
+                    var title = $(this).data('title').toLowerCase();
+                    var date = $(this).data('date');
+
+                    var genreMatch = selectedGenre === "" || genres.includes(selectedGenre);
+                    var titleMatch = title.includes(searchQuery);
+                    var dateMatch = selectedDate === "" || date === selectedDate;
+
+                    if (genreMatch && titleMatch && dateMatch) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+
+            $('#genreSelect').change(filterRows);
+            $('#searchInput').on('input', filterRows);
+            $('#dateSelect').change(filterRows);
+
+            $('.vote-button').click(function() {
+                var movieId = $(this).data('id');
+                $.post('/vote/', { movie_id: movieId }, function(response) {
+                    alert('Vote added!');
+                    location.reload();
+                });
+            });
+
+            $('.edit-button').click(function() {
+                var movieDate = $(this).data('date');
+                var dateObj = new Date(movieDate);
+                dateObj.setDate(dateObj.getDate() + 1); // Add one day
+                var formattedDate = dateObj.toISOString().split('T')[0];
+                window.location.href = 'vote/' + formattedDate + '/';
+            });
+        });
+    </script>
+
+</body>
+</html>

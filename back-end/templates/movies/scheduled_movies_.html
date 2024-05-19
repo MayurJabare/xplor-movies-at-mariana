@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote for Movies</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        input[type="text"], select {
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        img {
+            max-width: 100px;
+            height: auto;
+        }
+
+        ul {
+            padding-left: 20px;
+            list-style-type: disc;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Movies for {{ date }}</h1>
+
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Metacritic Score</th>
+        <th>Action</th>
+    </tr>
+    {% for movie in movies %}
+        <tr>
+            <td>{{ movie.movie.title }}</td>
+            <td>{{ movie.movie.meta_score }}</td>
+            <td>
+                <button class="vote-button" data-id="{{ movie.id }}">Vote</button>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+
+<script>
+    $(document).ready(function() {
+        $('.vote-button').click(function() {
+            var movieId = $(this).data('id');
+            $.ajax({
+                type: 'POST',
+                url: '{% url "vote_for_movie" %}',
+                data: {
+                    'movie_id': movieId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Vote added successfully!');
+                        var newScore = parseInt($('#score_' + movieId).text()) + 1;
+                        $('#score_' + movieId).text(newScore);
+                    } else {
+                        alert('Failed to add vote. Please try again.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('An error occurred while adding vote.');
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+
+
+</body>
+</html>

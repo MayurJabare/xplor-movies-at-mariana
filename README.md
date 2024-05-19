@@ -76,6 +76,8 @@ Result:
 
 cmd cd Fullstack-Mariana/front-end/frontend-app
 
+cmd npm install
+
 cmd npm start
 
 

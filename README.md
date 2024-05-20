@@ -74,7 +74,7 @@ Result:
 
 # Fronend with react js
 
-cmd cd Fullstack-Mariana/front-end/frontend-app
+cmd cd xplor-movies-at-mariana/front-end/frontend-app
 
 cmd npm install
 
